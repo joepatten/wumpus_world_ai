@@ -24,6 +24,7 @@ def PyAgent_Process (stench,breeze,glitter,bump,scream):
         perceptStr += "Breeze=False,"
     if (glitter == 1):
         perceptStr += "Glitter=True,"
+        return Action.GRAB
     else:
         perceptStr += "Glitter=False,"
     if (bump == 1):
@@ -34,7 +35,7 @@ def PyAgent_Process (stench,breeze,glitter,bump,scream):
         perceptStr += "Scream=True"
     else:
         perceptStr += "Scream=False"
-    print("PyAgent_Process: " + perceptStr)
+    print("PyAgent_Process(from python): " + perceptStr)
     
     return Action.GOFORWARD
 
