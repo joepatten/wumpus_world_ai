@@ -1,84 +1,91 @@
 # PyAgent.py
 import random
-import time
 import Action
 import Orientation
 
-#todo: make class to keep track of orientation, and where agent is and where they have been.
-#matrix
 
-#return to beginning and climb (if have gold)
 class Py_Agent:
     def __init__(self):
+        self.step = 0
         self.has_gold = False
         self.has_arrow = True
         self.orient = 0
-        self.position = [1,1]
+        self.location = [1, 1]
         self.orientations = ['RIGHT', 'UP', 'LEFT', 'DOWN']
+        self.go_forward = False
+
+    def get_location(self):
+        return self.location
+
+    def get_orientation(self):
+        return self.orientations[self.orient]
 
     def shoot_arrow(self):
         self.has_arrow = False
 
     def turn_left(self):
-        self.orient = (self.orient + 1)%4
+        self.orient = (self.orient + 1) % 4
 
     def turn_right(self):
-        self.orient = (self.orient - 1)%4
+        self.orient = (self.orient - 1) % 4
 
-    def go_forward(self, bump=False):
-        orientation = self.orientations[self.orient]
-        print('ORIENTATIONksdjfsdkjfhskdf: ',orientation)
-        if bump == True:
-            offset = -1
-        else:
-            offset = 1
-        if orientation == 'RIGHT':
-            self.position[0] += 1*offset
-        if orientation == 'LEFT':
-            self.position[0] -= 1*offset
-        if orientation == 'UP':
-            self.position[1] += 1*offset
-        if orientation == 'DOWN':
-            self.position[1] -= 1*offset
+    def grab_gold(self):
+        self.has_gold = True
+
+    def should_climb(self):
+        return pa.has_gold and pa.location == [1, 1]
+
+    def update_location(self, bump):
+        orientation = self.get_orientation()
+        if bump != 1:
+            if orientation == 'RIGHT':
+                self.location[0] += 1
+            if orientation == 'LEFT':
+                self.location[0] -= 1
+            if orientation == 'UP':
+                self.location[1] += 1
+            if orientation == 'DOWN':
+                self.location[1] -= 1
+        self.go_forward = False
 
 
-
-#actions found in agent.cc
 pa = Py_Agent()
 
-def PyAgent_Constructor ():
+
+def PyAgent_Constructor():
     print("PyAgent_Constructor")
 
 
-def PyAgent_Destructor ():
+def PyAgent_Destructor():
     print("PyAgent_Destructor")
 
-def PyAgent_Initialize ():
-    print("PyAgent_Initialize")
-    pa = Py_Agent()
 
-def PyAgent_Process (stench,breeze,glitter,bump,scream):
-    #time.sleep(.5)
-    perceptStr = ""
+def PyAgent_Initialize():
+    print("PyAgent_Initialize")
+
+
+def PyAgent_Process(stench, breeze, glitter, bump, scream):
+    # 4) Update location if you have gone forward in last turn
+    if pa.go_forward:
+        pa.update_location(bump)
+
+    # 3a) Grab gold if see glitter
+    if (glitter == 1):
+        pa.grab_gold()
+        return Action.GRAB
+
+    # 3b) Climb out if at location [1, 1] and have gold
+    if pa.should_climb:
+        Action.CLIMB
+
+    # 3c) Shoot arrow if smell stench and if have arrow
     if (stench == 1):
-        perceptStr += "Stench=True,"
-        if pa.has_arrow == True:
+        if pa.has_arrow:
             pa.shoot_arrow()
             return Action.SHOOT
-    else:
-        perceptStr += "Stench=False,"
-    if (breeze == 1):
-        perceptStr += "Breeze=True,"
-    else:
-        perceptStr += "Breeze=False,"
-    if (glitter == 1):
-        perceptStr += "Glitter=True,"
-        return Action.GRAB
-    else:
-        perceptStr += "Glitter=False,"
+
+    # 3d) If bump into wall, randomly turn right or left
     if (bump == 1):
-        perceptStr += "Bump=True,"
-        pa.go_forward(bump)
         random_draw = random.random()
         if random_draw > .5:
             pa.turn_left()
@@ -86,19 +93,11 @@ def PyAgent_Process (stench,breeze,glitter,bump,scream):
         else:
             pa.turn_right()
             return Action.TURNRIGHT
-    else:
-        perceptStr += "Bump=False,"
-    if (scream == 1):
-        perceptStr += "Scream=True"
-    else:
-        perceptStr += "Scream=False"
-    if pa.has_gold and pa.position == [1,1]:
-        return Action.CLIMB
-    print("PyAgent_Process(from python): " + perceptStr)
-    
+
+    # 3e) Else, go forward
+    pa.go_forward = True
     return Action.GOFORWARD
 
-def PyAgent_GameOver (score):
+
+def PyAgent_GameOver(score):
     print("PyAgent_GameOver: score = " + str(score))
-    print('Agent is at {}'.format(pa.position))
-    print('Orientation is {}'.format(pa.orientations[pa.orient]))
